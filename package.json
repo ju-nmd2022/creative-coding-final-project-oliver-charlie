@@ -1,0 +1,14 @@
+{
+  "name": "creative-coding-portfolio-blol22ck",
+  "version": "1.0.0",
+  "description": "This is a HTML page that displays the artworks you created during your Creative Coding course at [Jönköping University](https://www.ju.se).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "tone": "^15.0.4"
+  }
+}
