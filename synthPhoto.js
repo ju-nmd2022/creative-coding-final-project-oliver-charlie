@@ -42,37 +42,46 @@ let video;
 let captureButton;
 let snapshot = null; // Variable to store the freeze frame
 let hsbValues = null; // Store HSB values
+let isMousePressed = false; // Track mouse press state
 
 function setup() {
   createCanvas(innerWidth, innerHeight); // Create a canvas that fits the window
   colorMode(HSB); // Set the color mode to HSB
   
+  // Start capturing video from the webcam
   video = createCapture(VIDEO);
-  console.log('Video capture started successfully.');
   video.size(640, 480); // Set the video size
-  video.hide(); // Hide the HTML video element
-
+  video.hide(); // Hide the raw video element because we'll draw it on the canvas
+  
   // Create a button to take the picture
   captureButton = createButton('Take Picture');
   captureButton.position(10, 10);
   captureButton.mousePressed(takeSnapshot); // Attach the snapshot function
-
-  // Detect mouse click on canvas to get HSB values of that pixel
-  canvas.mousePressed(getPixelHSB);
 }
 
 function draw() {
   background(0);
 
-  // Calculate the x and y positions to center the video/snapshot
-  let x = (width - video.width) / 2;
-  let y = (height - video.height) / 2;
+  // Check if video is loaded and ready
+  if (video.loadedmetadata) {
+    // Calculate the x and y positions to center the video/snapshot
+    let x = (width - video.width) / 2;
+    let y = (height - video.height) / 2;
 
-  // If snapshot is null, display live video, otherwise display the frozen image
-  if (snapshot) {
-    image(snapshot, x, y, 640, 480); // Draw the frozen image if it exists
+    // If snapshot is null, display live video, otherwise display the frozen image
+    if (snapshot) {
+      image(snapshot, x, y, 640, 480); // Draw the frozen image if it exists
+    } else {
+      image(video, x, y, 640, 480); // Draw live video if no snapshot
+    }
+
+    // Check if the mouse was pressed
+    if (isMousePressed && snapshot) {
+      getPixelHSB(); // Get HSB values on mouse click
+      isMousePressed = false; // Reset the mouse press state
+    }
   } else {
-    image(video, x, y, 640, 480); // Draw live video if no snapshot
+    console.log('Video not ready yet');
   }
 
   // Display HSB values if available
@@ -94,19 +103,22 @@ function takeSnapshot() {
 
 // Function to get the HSB values of the pixel at the mouse click position
 function getPixelHSB() {
-  if (snapshot) {
-    let x = mouseX - (width - snapshot.width) / 2;
-    let y = mouseY - (height - snapshot.height) / 2;
+  let x = mouseX - (width - snapshot.width) / 2;
+  let y = mouseY - (height - snapshot.height) / 2;
 
-    // Check if the click is within the snapshot bounds
-    if (x >= 0 && x < snapshot.width && y >= 0 && y < snapshot.height) {
-      let pixelColor = snapshot.get(x, y); // Get the color of the pixel at (x, y)
-      let h = hue(pixelColor); // Get the hue value
-      let s = saturation(pixelColor); // Get the saturation value
-      let b = brightness(pixelColor); // Get the brightness value
+  // Check if the click is within the snapshot bounds
+  if (x >= 0 && x < snapshot.width && y >= 0 && y < snapshot.height) {
+    let pixelColor = snapshot.get(x, y); // Get the color of the pixel at (x, y)
+    let h = hue(pixelColor); // Get the hue value
+    let s = saturation(pixelColor); // Get the saturation value
+    let b = brightness(pixelColor); // Get the brightness value
 
-      // Store the HSB values
-      hsbValues = { h: h.toFixed(2), s: s.toFixed(2), b: b.toFixed(2) };
-    }
+    // Store the HSB values
+    hsbValues = { h: h.toFixed(2), s: s.toFixed(2), b: b.toFixed(2) };
   }
+}
+
+// Overriding default mousePressed() to set the isMousePressed flag
+function mousePressed() {
+  isMousePressed = true; // Set the flag when the mouse is pressed
 }
