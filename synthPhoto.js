@@ -41,7 +41,7 @@ function setup() {
   captureButton.mousePressed(takeSnapshot); // Attach the snapshot function
 
   // Initialize synthesizers
-  synth = new Tone.Synth().toDestination(); // Initialize melody synth
+  synth = new Tone.PolySynth(Tone.Synth).toDestination(); // Initialize polyphonic synth
   bassSynth = new Tone.MembraneSynth().toDestination(); // Initialize bass synth
 
   // Start Tone.js context
