@@ -1,4 +1,3 @@
-
 /* Used ChatGPT to make the button freeze the frame
 
 Used ChatGPT to create the function to log the average Hue, Saturation, and Brightness 
@@ -40,8 +39,20 @@ function setup() {
   captureButton.position(10, 10);
   captureButton.mousePressed(takeSnapshot); // Attach the snapshot function
 
-  // Initialize synthesizers
-  synth = new Tone.PolySynth(Tone.Synth).toDestination(); // Initialize polyphonic synth
+  // Initialize synthesizers with smooth sounds
+  synth = new Tone.PolySynth({
+    polyphony: 4, // Allow polyphony of 4 voices
+    oscillator: {
+      type: "sine", // Use sine wave for smooth sound
+    },
+    envelope: {
+      attack: 0.1, // 100ms attack
+      decay: 0.2, // 200ms decay
+      sustain: 0.5, // Sustain level at 50%
+      release: 0.5, // 500ms release
+    },
+  }).toDestination(); // Initialize polyphonic synth
+
   bassSynth = new Tone.MembraneSynth().toDestination(); // Initialize bass synth
 
   // Start Tone.js context
@@ -180,10 +191,10 @@ function playSoundForBox(index) {
 
   let note = notes[noteIndex];
 
-  // Play melody synth sound with random parameters
+  // Play melody synth sound with smoother sound
   synth.triggerAttackRelease(
     note,
-    duration,
+    duration * 2, // Increase duration to make notes longer
     Tone.now(),
     Tone.dbToGain(volume)
   );
@@ -191,7 +202,6 @@ function playSoundForBox(index) {
   // Random mapping for the bass
   let bassNoteIndex =
     floor(map(hsb.h, 0, 360, 0, bassNotes.length)) % bassNotes.length;
-  let bassVolume = map(hsb.b * randomFactor, 0, 100, -24, -12); // Lower volume for bass
   let bassDuration = map(hsb.s * randomFactor, 0, 100, 0.1, 1);
 
   let bassNote = bassNotes[bassNoteIndex];
@@ -201,7 +211,6 @@ function playSoundForBox(index) {
     bassNote,
     bassDuration,
     Tone.now(),
-    Tone.dbToGain(bassVolume)
   );
 }
 
@@ -231,4 +240,3 @@ function displayHSBValues() {
     }
   }
 }
-
