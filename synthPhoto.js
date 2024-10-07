@@ -1,15 +1,15 @@
-// Used ChatGPT to make the button freeze the frame
 
-/* Used ChatGPT to create the function to log the average Hue, Saturation, and Brightness 
+/* Used ChatGPT to make the button freeze the frame
+
+Used ChatGPT to create the function to log the average Hue, Saturation, and Brightness 
 of the video on click, and to then divide it into a grid, capture values in each grid box and displaying
 each value in each grid box.
-*/
 
-/* Used Garrit's AutomaTone Step Sequencer example as a base and took help from 
+
+ Used Garrit's AutomaTone Step Sequencer example as a base and took help from 
 ChatGPT to implement it into our previous code. Implemented a simple sound just to
 see how the step sequencer works based on the HSB values in the picture. Combined 
 the sound being randomized even if the same picture is taken twice. 
-
 */
 
 let video;
@@ -22,6 +22,9 @@ let synth, bassSynth; // Declare both synth and bass synth
 // Scale of notes for melody and bass
 const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
 const bassNotes = ["C2", "D2", "E2", "F2", "G2", "A2", "B2", "C3"];
+
+let currentBox = 0; // Track the current box being played
+let soundInterval; // Interval for looping sound playback
 
 function setup() {
   createCanvas(innerWidth, innerHeight); // Create a canvas that fits the window
@@ -40,6 +43,9 @@ function setup() {
   // Initialize synthesizers
   synth = new Tone.Synth().toDestination(); // Initialize melody synth
   bassSynth = new Tone.MembraneSynth().toDestination(); // Initialize bass synth
+
+  // Start Tone.js context
+  Tone.start(); // Ensure the Tone.js context is started
 }
 
 function draw() {
@@ -79,9 +85,8 @@ function takeSnapshot() {
   ); // Copy the current video frame into the snapshot
   snapshot.loadPixels(); // Load pixels to access the pixel array
 
-  // Function to calculate the average HSB values for a 4x4 grid
   calculateAverageHSBGrid(); // Calculate and display the average HSB values for the grid
-  playSoundBasedOnHSB(); // Play sound based on HSB values
+  startSoundLoop(); // Start looping sound playback based on HSB values
 }
 
 // Function to calculate the average HSB values for a 4x4 grid
@@ -123,64 +128,81 @@ function calculateAverageHSBGrid() {
   }
 }
 
-// Function to play sound with both melody synth and bass synth
-function playSoundBasedOnHSB() {
-  for (let i = 0; i < hsbValuesGrid.length; i++) {
-    let hsb = hsbValuesGrid[i];
+/* Got help from ChatGPT to make the sound loop after the 16th sound.
+It changed the function to startSoundLoop instead and moved the other code to the function
+playSoundForBox instead.
+*/
+function startSoundLoop() {
+  currentBox = 0; // Reset current box index
+  clearInterval(soundInterval); // Clear any existing interval
 
-    // Random mapping between HSB and sound parameters for melody synth
-    let randomFactor = random(0.8, 1.2); // Small random factor
-
-    let randomMapping = int(random(3)); // Random mapping
-    let noteIndex, volume, duration;
-
-    switch (randomMapping) {
-      case 0:
-        // Hue affects note, Saturation affects volume, Brightness affects duration
-        noteIndex = floor(map(hsb.h, 0, 360, 0, notes.length)) % notes.length;
-        volume = map(hsb.s * randomFactor, 0, 100, -12, 0);
-        duration = map(hsb.b * randomFactor, 0, 100, 0.1, 1);
-        break;
-      case 1:
-        // Saturation affects note, Brightness affects volume, Hue affects duration
-        noteIndex = floor(map(hsb.s, 0, 100, 0, notes.length)) % notes.length;
-        volume = map(hsb.b * randomFactor, 0, 100, -12, 0);
-        duration = map(hsb.h * randomFactor, 0, 360, 0.1, 1);
-        break;
-      case 2:
-        // Brightness affects note, Hue affects volume, Saturation affects duration
-        noteIndex = floor(map(hsb.b, 0, 100, 0, notes.length)) % notes.length;
-        volume = map(hsb.h * randomFactor, 0, 360, -12, 0);
-        duration = map(hsb.s * randomFactor, 0, 100, 0.1, 1);
-        break;
+  soundInterval = setInterval(() => {
+    if (currentBox < hsbValuesGrid.length) {
+      playSoundForBox(currentBox); // Play sound for the current box
+      currentBox++; // Move to the next box
+    } else {
+      currentBox = 0; // Reset to the first box if end is reached
     }
+  }, 500); // Set interval time (500 milliseconds)
+}
 
-    let note = notes[noteIndex];
+// Function to play sound for a specific box
+function playSoundForBox(index) {
+  let hsb = hsbValuesGrid[index];
 
-    // Play melody synth sound with random parameters
-    synth.triggerAttackRelease(
-      note,
-      duration,
-      Tone.now() + i * 0.5,
-      Tone.dbToGain(volume)
-    );
+  // Random mapping between HSB and sound parameters for melody synth
+  let randomFactor = random(0.8, 1.2); // Small random factor
 
-    // Random mapping for the bass
-    let bassNoteIndex =
-      floor(map(hsb.h, 0, 360, 0, bassNotes.length)) % bassNotes.length;
-    let bassVolume = map(hsb.b * randomFactor, 0, 100, -24, -12); // Lower volume for bass
-    let bassDuration = map(hsb.s * randomFactor, 0, 100, 0.1, 1);
+  let noteIndex, volume, duration;
 
-    let bassNote = bassNotes[bassNoteIndex];
-
-    // Play bass sound
-    bassSynth.triggerAttackRelease(
-      bassNote,
-      bassDuration,
-      Tone.now() + i * 0.5,
-      Tone.dbToGain(bassVolume)
-    );
+  // Switch for different mappings of HSB values to sound parameters
+  let randomMapping = int(random(3));
+  switch (randomMapping) {
+    case 0:
+      // Hue affects note, Saturation affects volume, Brightness affects duration
+      noteIndex = floor(map(hsb.h, 0, 360, 0, notes.length)) % notes.length;
+      volume = map(hsb.s * randomFactor, 0, 100, -12, 0);
+      duration = map(hsb.b * randomFactor, 0, 100, 0.1, 1);
+      break;
+    case 1:
+      // Saturation affects note, Brightness affects volume, Hue affects duration
+      noteIndex = floor(map(hsb.s, 0, 100, 0, notes.length)) % notes.length;
+      volume = map(hsb.b * randomFactor, 0, 100, -12, 0);
+      duration = map(hsb.h * randomFactor, 0, 360, 0.1, 1);
+      break;
+    case 2:
+      // Brightness affects note, Hue affects volume, Saturation affects duration
+      noteIndex = floor(map(hsb.b, 0, 100, 0, notes.length)) % notes.length;
+      volume = map(hsb.h * randomFactor, 0, 360, -12, 0);
+      duration = map(hsb.s * randomFactor, 0, 100, 0.1, 1);
+      break;
   }
+
+  let note = notes[noteIndex];
+
+  // Play melody synth sound with random parameters
+  synth.triggerAttackRelease(
+    note,
+    duration,
+    Tone.now(),
+    Tone.dbToGain(volume)
+  );
+
+  // Random mapping for the bass
+  let bassNoteIndex =
+    floor(map(hsb.h, 0, 360, 0, bassNotes.length)) % bassNotes.length;
+  let bassVolume = map(hsb.b * randomFactor, 0, 100, -24, -12); // Lower volume for bass
+  let bassDuration = map(hsb.s * randomFactor, 0, 100, 0.1, 1);
+
+  let bassNote = bassNotes[bassNoteIndex];
+
+  // Play bass sound
+  bassSynth.triggerAttackRelease(
+    bassNote,
+    bassDuration,
+    Tone.now(),
+    Tone.dbToGain(bassVolume)
+  );
 }
 
 // Function to display HSB values in each box of the grid
@@ -209,3 +231,4 @@ function displayHSBValues() {
     }
   }
 }
+
