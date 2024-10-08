@@ -207,11 +207,7 @@ function playSoundForBox(index) {
   let bassNote = bassNotes[bassNoteIndex];
 
   // Play bass sound
-  bassSynth.triggerAttackRelease(
-    bassNote,
-    bassDuration,
-    Tone.now(),
-  );
+  bassSynth.triggerAttackRelease(bassNote, bassDuration, Tone.now());
 }
 
 // Function to display HSB values in each box of the grid
