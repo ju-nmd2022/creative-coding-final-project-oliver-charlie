@@ -25,6 +25,13 @@ const bassNotes = ["C2", "D2", "E2", "F2", "G2", "A2", "B2", "C3"];
 let currentBox = 0; // Track the current box being played
 let soundInterval; // Interval for looping sound playback
 
+// Flow field variables made with chatGPT:
+let flowField = []; // Array to store flow field vectors
+let cols, rows; // Number of columns and rows in the flow field
+let noiseScale = 0.1; // Scale for Perlin noise
+let timeOffset = 0; // Time offset for animation
+let fadeAmount = 0; // Amount to fade the snapshot
+
 function setup() {
   createCanvas(innerWidth, innerHeight); // Create a canvas that fits the window
   colorMode(HSB); // Set the color mode to HSB
@@ -68,16 +75,29 @@ function draw() {
     let x = (width - video.width) / 2;
     let y = (height - video.height) / 2;
 
+    // if statement made with ChatGPT to fade out video after snapshot is taken
     // If snapshot is null, display live video, otherwise display the frozen image
     if (snapshot) {
+      // Fade out the snapshot
+      fadeAmount += 5; // Increase fade amount over time
+      tint(255, 255 - fadeAmount); // Apply tint to fade out the image
       image(snapshot, x, y, 640, 480); // Draw the frozen image if it exists
       displayHSBValues(); // Display HSB values on the canvas
+
+      // If the fade amount exceeds 255, reset snapshot
+      if (fadeAmount > 255) {
+        snapshot = null;
+        fadeAmount = 0;
+      }
     } else {
       image(video, x, y, 640, 480); // Draw live video if no snapshot
     }
   } else {
     console.log("Video not ready yet");
   }
+
+  // Draw the flow field with organic movement
+  drawFlowField();
 }
 
 // Function to take a snapshot (freeze frame)
@@ -98,6 +118,9 @@ function takeSnapshot() {
 
   calculateAverageHSBGrid(); // Calculate and display the average HSB values for the grid
   startSoundLoop(); // Start looping sound playback based on HSB values
+
+  // Initialize the flow field
+  setupFlowField();
 }
 
 // Function to calculate the average HSB values for a 4x4 grid
@@ -233,6 +256,45 @@ function displayHSBValues() {
       text(`H: ${hsb.h}`, x + 5, y + 15);
       text(`S: ${hsb.s}`, x + 5, y + 30);
       text(`B: ${hsb.b}`, x + 5, y + 45);
+    }
+  }
+}
+// Flow field set up with help from ChatGPT and also to draw it
+
+// Function to set up the flow field
+function setupFlowField() {
+  cols = 50; // Number of columns in the flow field
+  rows = 50; // Number of rows in the flow field
+  flowField = []; // Reset flow field array
+
+  // Initialize the flow field with vectors based on Perlin noise
+  for (let i = 0; i < cols; i++) {
+    flowField[i] = [];
+    for (let j = 0; j < rows; j++) {
+      let angle = noise(i * noiseScale, j * noiseScale) * TWO_PI * 2; // Angle based on Perlin noise
+      flowField[i][j] = p5.Vector.fromAngle(angle); // Create a vector from the angle
+    }
+  }
+}
+
+// Function to draw the flow field with organic movement
+function drawFlowField() {
+  timeOffset += 0.01; // Increment time offset for animation
+
+  for (let i = 0; i < cols; i++) {
+    for (let j = 0; j < rows; j++) {
+      // Calculate noise value for the flow field
+      let angle =
+        noise(i * noiseScale, j * noiseScale, timeOffset) * TWO_PI * 2; // Update angle based on noise and time
+      flowField[i][j] = p5.Vector.fromAngle(angle); // Update flow field vector
+
+      // Draw the flow field as lines
+      let x = map(i, 0, cols, 0, width);
+      let y = map(j, 0, rows, 0, height);
+      stroke(255, 100); // Set stroke color
+      strokeWeight(2); // Set stroke weight
+      let v = flowField[i][j]; // Get the vector from the flow field
+      line(x, y, x + v.x * 20, y + v.y * 20); // Draw the line based on the vector
     }
   }
 }
