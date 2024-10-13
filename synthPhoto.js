@@ -1,12 +1,13 @@
 /* Used ChatGPT to make the button freeze the frame
 
-Used ChatGPT to create the function to log the average Red, Green, and Blue 
+Used ChatGPT to create the function to log the average Hue, Saturation, and Brightness 
 of the video on click, and to then divide it into a grid, capture values in each grid box and displaying
 each value in each grid box.
 
-Used Garrit's AutomaTone Step Sequencer example as a base and took help from 
+
+ Used Garrit's AutomaTone Step Sequencer example as a base and took help from 
 ChatGPT to implement it into our previous code. Implemented a simple sound just to
-see how the step sequencer works based on the RGB values in the picture. Combined 
+see how the step sequencer works based on the HSB values in the picture. Combined 
 the sound being randomized even if the same picture is taken twice.
 */
 
@@ -45,21 +46,47 @@ function setup() {
   captureButton.position(10, 10);
   captureButton.mousePressed(takeSnapshot); // Attach the snapshot function
 
-  // Initialize synthesizers with smooth sounds
+  // Initialize the main synth with a retro synthwave sound
   synth = new Tone.PolySynth({
     polyphony: 4, // Allow polyphony of 4 voices
     oscillator: {
-      type: "sine", // Use sine wave for smooth sound
+      type: "sawtooth", // Sawtooth wave for that retro synthwave feel
     },
     envelope: {
-      attack: 0.1, // 100ms attack
-      decay: 0.2, // 200ms decay
-      sustain: 0.5, // Sustain level at 50%
-      release: 0.5, // 500ms release
+      attack: 0.1, // Slightly faster attack for punchy sound
+      decay: 0.8,  // Longer decay for a sustained sound
+      sustain: 0.6, // Sustain level for that "pad" like sound
+      release: 1.2, // Longer release to let the notes fade out
     },
-  }).toDestination(); // Initialize polyphonic synth
+  }).toDestination();
 
-  bassSynth = new Tone.MembraneSynth().toDestination(); // Initialize bass synth
+  // Add reverb to create a synthwave atmospheric sound
+  let reverb = new Tone.Reverb({
+    decay: 3,        // Long reverb for atmosphere
+    wet: 0.4         // 40% wet signal to mix in spacey feel
+  }).toDestination();
+
+  // Add chorus effect to enhance the retro sound
+  let chorus = new Tone.Chorus(4, 2.5, 0.5).start(); // Slow rate for 80s shimmer
+
+  // Connect the synth to the chorus and reverb
+  synth.chain(chorus, reverb);
+
+  // Initialize the bass synth for a punchy bass sound
+  bassSynth = new Tone.Synth({
+    oscillator: {
+      type: "square", // Square wave for punchy bass
+    },
+    envelope: {
+      attack: 0.05,  // Quick attack for punchy bass
+      decay: 0.2,    // Short decay
+      sustain: 0.3,  // Lower sustain for tighter bass
+      release: 0.5,  // Short release to keep the rhythm tight
+    },
+  }).toDestination();
+
+  // Apply a similar reverb effect to the bass synth for cohesion
+  bassSynth.chain(reverb);
 
   // Start Tone.js context
   Tone.start(); // Ensure the Tone.js context is started
@@ -131,31 +158,31 @@ function calculateAverageRGBGrid() {
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
-      let totalR = 0;
-      let totalG = 0;
-      let totalB = 0;
+      let totalRed = 0;
+      let totalGreen = 0;
+      let totalBlue = 0;
       let pixelCount = 0;
 
       for (let x = i * boxWidth; x < (i + 1) * boxWidth; x++) {
         for (let y = j * boxHeight; y < (j + 1) * boxHeight; y++) {
           let pixelColor = snapshot.get(x, y); // Get the color of each pixel
-          totalR += red(pixelColor); // Sum the red component
-          totalG += green(pixelColor); // Sum the green component
-          totalB += blue(pixelColor); // Sum the blue component
+          totalRed += red(pixelColor); // Sum the red
+          totalGreen += green(pixelColor); // Sum the green
+          totalBlue += blue(pixelColor); // Sum the blue
           pixelCount++; // Count the pixels
         }
       }
 
       // Calculate the average RGB values for the current box
-      let avgR = totalR / pixelCount;
-      let avgG = totalG / pixelCount;
-      let avgB = totalB / pixelCount;
+      let avgRed = totalRed / pixelCount;
+      let avgGreen = totalGreen / pixelCount;
+      let avgBlue = totalBlue / pixelCount;
 
       // Store the average RGB values for the box
       rgbValuesGrid.push({
-        r: avgR.toFixed(2),
-        g: avgG.toFixed(2),
-        b: avgB.toFixed(2),
+        r: avgRed.toFixed(2),
+        g: avgGreen.toFixed(2),
+        b: avgBlue.toFixed(2),
       });
     }
   }
@@ -183,8 +210,7 @@ function startSoundLoop() {
 function playSoundForBox(index) {
   let rgb = rgbValuesGrid[index];
 
-  // Random mapping between RGB and sound parameters for melody synth
-  let randomFactor = random(0.8, 1.2); // Small random factor
+  let randomFactor = random(0.8, 1.2); // Slight randomization for variety
 
   let noteIndex, volume, duration;
 
@@ -194,85 +220,87 @@ function playSoundForBox(index) {
     case 0:
       // Red affects note, Green affects volume, Blue affects duration
       noteIndex = floor(map(rgb.r, 0, 255, 0, notes.length)) % notes.length;
-      volume = map(rgb.g * randomFactor, 0, 255, -12, 0);
-      duration = map(rgb.b * randomFactor, 0, 255, 0.1, 1);
+      volume = map(rgb.g * randomFactor, 0, 255, -12, 0); // Softer volume range
+      duration = map(rgb.b * randomFactor, 0, 255, 0.5, 1.5); // Synthwave-style duration
       break;
     case 1:
       // Green affects note, Blue affects volume, Red affects duration
       noteIndex = floor(map(rgb.g, 0, 255, 0, notes.length)) % notes.length;
-      volume = map(rgb.b * randomFactor, 0, 255, -12, 0);
-      duration = map(rgb.r * randomFactor, 0, 255, 0.1, 1);
+      volume = map(rgb.b * randomFactor, 0, 255, -12, 0); // Softer volume
+      duration = map(rgb.r * randomFactor, 0, 255, 0.5, 1.5); // Smooth duration
       break;
     case 2:
       // Blue affects note, Red affects volume, Green affects duration
       noteIndex = floor(map(rgb.b, 0, 255, 0, notes.length)) % notes.length;
-      volume = map(rgb.r * randomFactor, 0, 255, -12, 0);
-      duration = map(rgb.g * randomFactor, 0, 255, 0.1, 1);
+      volume = map(rgb.r * randomFactor, 0, 255, -12, 0); // Volume mapped to red
+      duration = map(rgb.g * randomFactor, 0, 255, 0.5, 1.5); // Green controls duration
       break;
   }
 
-  // Play the note with mapped parameters
-  synth.triggerAttackRelease(notes[noteIndex], duration, undefined, volume);
+  let note = notes[noteIndex];
 
-  // Bass sound with lower notes, using RGB value from the same box
+  // Trigger the main synth sound with a synthwave feel
+  synth.triggerAttackRelease(
+    note,
+    duration,          // Long note duration for synthwave
+    undefined,
+    Tone.dbToGain(volume)  // Converted volume to decibels
+  );
+
+  // Bass sound triggered with quick attack for synthwave bassline
   let bassNoteIndex = floor(map(rgb.r + rgb.g + rgb.b, 0, 765, 0, bassNotes.length)) % bassNotes.length;
-  let bassDuration = map(rgb.r * randomFactor, 0, 255, 0.1, 1);
+  let bassDuration = map(rgb.r * randomFactor, 0, 255, 0.2, 0.5); // Short punchy bass notes
   bassSynth.triggerAttackRelease(bassNotes[bassNoteIndex], bassDuration);
 }
 
-// Function to display RGB values on the canvas
 function displayRGBValues() {
-  const boxWidth = video.width / gridSize; // Width of each box
-  const boxHeight = video.height / gridSize; // Height of each box
+  const boxWidth = width / gridSize;
+  const boxHeight = height / gridSize;
 
-  fill(255);
-  textSize(12);
   textAlign(CENTER, CENTER);
+  textSize(16);
+  fill(255);
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       let index = i * gridSize + j;
       let rgb = rgbValuesGrid[index];
+      let x = i * boxWidth;
+      let y = j * boxHeight;
 
-      let x = i * boxWidth + (width - video.width) / 2;
-      let y = j * boxHeight + (height - video.height) / 2;
-
-      // Display the RGB values in each box
-      text(`R:${rgb.r} G:${rgb.g} B:${rgb.b}`, x + boxWidth / 2, y + boxHeight / 2);
+      // Display R, G, and B values for each grid box
+      text(`R: ${rgb.r}`, x + boxWidth / 2, y + 15); // Display the red value
+      text(`G: ${rgb.g}`, x + boxWidth / 2, y + 35); // Display the green value
+      text(`B: ${rgb.b}`, x + boxWidth / 2, y + 55); // Display the blue value
     }
   }
 }
 
-// Function to set up the flow field for organic movement
+
+// Flow field setup and drawing, same as before
 function setupFlowField() {
-  cols = gridSize;
-  rows = gridSize;
-  flowField = [];
-  for (let i = 0; i < cols; i++) {
-    flowField[i] = [];
-    for (let j = 0; j < rows; j++) {
-      let angle = noise(i * noiseScale, j * noiseScale) * TWO_PI;
-      flowField[i][j] = p5.Vector.fromAngle(angle);
-    }
-  }
+  cols = width / 20;
+  rows = height / 20;
+
+  flowField = new Array(cols * rows);
 }
 
-// Function to draw the flow field with organic movement
 function drawFlowField() {
-  let fieldWidth = video.width / gridSize;
-  let fieldHeight = video.height / gridSize;
-
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
-      let vector = flowField[i][j];
-      let x = i * fieldWidth + (width - video.width) / 2;
-      let y = j * fieldHeight + (height - video.height) / 2;
+      let x = i * 20;
+      let y = j * 20;
 
-      stroke(255);
+      let angle = noise(i * noiseScale, j * noiseScale, timeOffset) * TWO_PI * 2;
+      let v = p5.Vector.fromAngle(angle);
+      flowField[i + j * cols] = v;
+
+      stroke(255, 50);
+      strokeWeight(1);
       push();
-      translate(x + fieldWidth / 2, y + fieldHeight / 2);
-      rotate(vector.heading());
-      line(0, 0, fieldWidth * 0.5, 0);
+      translate(x, y);
+      rotate(v.heading());
+      line(0, 0, 10, 0);
       pop();
     }
   }
