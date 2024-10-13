@@ -16,11 +16,11 @@ let captureButton;
 let snapshot = null; // Variable to store the freeze frame
 let rgbValuesGrid = []; // Array to store RGB values for each box in the grid
 const gridSize = 4; // Number of divisions in width and height
-let synth, bassSynth; // Declare both synth and bass synth
+let synth; // Declare synth synth
 
-// Scale of notes for melody and bass
-const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
-const bassNotes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
+// Scale of notes for melody
+const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "G3", "A3", "D5", "E5", "Bb4"];
+//const notes = ["C4"];
 
 let currentBox = 0; // Track the current box being played
 let soundInterval; // Interval for looping sound playback
@@ -53,10 +53,10 @@ function setup() {
       type: "sawtooth", // Sawtooth wave for that retro synthwave feel
     },
     envelope: {
-      attack: 2.0, // Slightly faster attack for punchy sound
+      attack: 1.0, // Slightly faster attack for punchy sound
       decay: 0.8,  // Longer decay for a sustained sound
-      sustain: 0.6, // Sustain level for that "pad" like sound
-      release: 1.2, // Longer release to let the notes fade out
+      sustain: 1.5, // Sustain level for that "pad" like sound
+      release: 10.2, // Longer release to let the notes fade out
     },
   }).toDestination();
 
@@ -72,22 +72,6 @@ function setup() {
 
   // Connect the synth to the chorus and reverb
   synth.chain(chorus, reverb);
-
-  // Initialize the bass synth for a punchy bass sound
-  bassSynth = new Tone.Synth({
-    oscillator: {
-      type: "square", // Square wave for punchy bass
-    },
-    envelope: {
-      attack: 0.05,  // Quick attack for punchy bass
-      decay: 0.2,    // Short decay
-      sustain: 0.3,  // Lower sustain for tighter bass
-      release: 0.5,  // Short release to keep the rhythm tight
-    },
-  }).toDestination();
-
-  // Apply a similar reverb effect to the bass synth for cohesion
-  bassSynth.chain(reverb);
 
   // Start Tone.js context
   Tone.start(); // Ensure the Tone.js context is started
@@ -247,11 +231,6 @@ function playSoundForBox(index) {
     undefined,
     Tone.dbToGain(volume)  // Converted volume to decibels
   );
-
-  // Bass sound triggered with quick attack for synthwave bassline
-  let bassNoteIndex = floor(map(rgb.r + rgb.g + rgb.b, 0, 765, 0, bassNotes.length)) % bassNotes.length;
-  let bassDuration = map(rgb.r * randomFactor, 0, 255, 0.2, 0.5); // Short punchy bass notes
-  bassSynth.triggerAttackRelease(bassNotes[bassNoteIndex], bassDuration);
 }
 
 function displayRGBValues() {
