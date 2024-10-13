@@ -271,19 +271,27 @@ function drawFlowField() {
       let x = i * 20;
       let y = j * 20;
 
+      // Calculate the index of the corresponding grid cell
+      let gridIndex = (j * gridSize + i) % rgbValuesGrid.length; // Wrap around if flow field is larger than the grid
+
+      // Get the RGB values for the current grid cell
+      let rgb = rgbValuesGrid[gridIndex];
+      
+      // Set the stroke color using the RGB values
+      stroke(rgb.r, rgb.g, rgb.b, 255); // Set alpha for a more subtle effect
+
       let angle = noise(i * noiseScale, j * noiseScale, timeOffset) * TWO_PI * 2;
       let v = p5.Vector.fromAngle(angle);
       flowField[i + j * cols] = v;
 
-      stroke(255, 50);
-      strokeWeight(1);
       push();
       translate(x, y);
       rotate(v.heading());
-      line(0, 0, 10, 0);
+      line(0, 0, 10, 0); // Draw the flow line
       pop();
     }
   }
 
   timeOffset += 0.01;
 }
+
