@@ -1,20 +1,19 @@
 /* Used ChatGPT to make the button freeze the frame
 
-Used ChatGPT to create the function to log the average Hue, Saturation, and Brightness 
+Used ChatGPT to create the function to log the average Red, Green, and Blue 
 of the video on click, and to then divide it into a grid, capture values in each grid box and displaying
 each value in each grid box.
 
-
- Used Garrit's AutomaTone Step Sequencer example as a base and took help from 
+Used Garrit's AutomaTone Step Sequencer example as a base and took help from 
 ChatGPT to implement it into our previous code. Implemented a simple sound just to
-see how the step sequencer works based on the HSB values in the picture. Combined 
-the sound being randomized even if the same picture is taken twice. 
+see how the step sequencer works based on the RGB values in the picture. Combined 
+the sound being randomized even if the same picture is taken twice.
 */
 
 let video;
 let captureButton;
 let snapshot = null; // Variable to store the freeze frame
-let hsbValuesGrid = []; // Array to store HSB values for each box in the grid
+let rgbValuesGrid = []; // Array to store RGB values for each box in the grid
 const gridSize = 4; // Number of divisions in width and height
 let synth, bassSynth; // Declare both synth and bass synth
 
@@ -34,7 +33,7 @@ let fadeAmount = 0; // Amount to fade the snapshot
 
 function setup() {
   createCanvas(innerWidth, innerHeight); // Create a canvas that fits the window
-  colorMode(HSB); // Set the color mode to HSB
+  colorMode(RGB); // Set the color mode to RGB
 
   // Start capturing video from the webcam
   video = createCapture(VIDEO);
@@ -82,7 +81,7 @@ function draw() {
       fadeAmount += 5; // Increase fade amount over time
       tint(255, 255 - fadeAmount); // Apply tint to fade out the image
       image(snapshot, x, y, 640, 480); // Draw the frozen image if it exists
-      displayHSBValues(); // Display HSB values on the canvas
+      displayRGBValues(); // Display RGB values on the canvas
 
       // If the fade amount exceeds 255, reset snapshot
       if (fadeAmount > 255) {
@@ -116,47 +115,47 @@ function takeSnapshot() {
   ); // Copy the current video frame into the snapshot
   snapshot.loadPixels(); // Load pixels to access the pixel array
 
-  calculateAverageHSBGrid(); // Calculate and display the average HSB values for the grid
-  startSoundLoop(); // Start looping sound playback based on HSB values
+  calculateAverageRGBGrid(); // Calculate and display the average RGB values for the grid
+  startSoundLoop(); // Start looping sound playback based on RGB values
 
   // Initialize the flow field
   setupFlowField();
 }
 
-// Function to calculate the average HSB values for a 4x4 grid
-function calculateAverageHSBGrid() {
+// Function to calculate the average RGB values for a 4x4 grid
+function calculateAverageRGBGrid() {
   const boxWidth = snapshot.width / gridSize; // Width of each box
   const boxHeight = snapshot.height / gridSize; // Height of each box
 
-  hsbValuesGrid = []; // Reset the grid values
+  rgbValuesGrid = []; // Reset the grid values
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
-      let totalHue = 0;
-      let totalSaturation = 0;
-      let totalBrightness = 0;
+      let totalR = 0;
+      let totalG = 0;
+      let totalB = 0;
       let pixelCount = 0;
 
       for (let x = i * boxWidth; x < (i + 1) * boxWidth; x++) {
         for (let y = j * boxHeight; y < (j + 1) * boxHeight; y++) {
           let pixelColor = snapshot.get(x, y); // Get the color of each pixel
-          totalHue += hue(pixelColor); // Sum the hue
-          totalSaturation += saturation(pixelColor); // Sum the saturation
-          totalBrightness += brightness(pixelColor); // Sum the brightness
+          totalR += red(pixelColor); // Sum the red component
+          totalG += green(pixelColor); // Sum the green component
+          totalB += blue(pixelColor); // Sum the blue component
           pixelCount++; // Count the pixels
         }
       }
 
-      // Calculate the average HSB values for the current box
-      let avgHue = totalHue / pixelCount;
-      let avgSaturation = totalSaturation / pixelCount;
-      let avgBrightness = totalBrightness / pixelCount;
+      // Calculate the average RGB values for the current box
+      let avgR = totalR / pixelCount;
+      let avgG = totalG / pixelCount;
+      let avgB = totalB / pixelCount;
 
-      // Store the average HSB values for the box
-      hsbValuesGrid.push({
-        h: avgHue.toFixed(2),
-        s: avgSaturation.toFixed(2),
-        b: avgBrightness.toFixed(2),
+      // Store the average RGB values for the box
+      rgbValuesGrid.push({
+        r: avgR.toFixed(2),
+        g: avgG.toFixed(2),
+        b: avgB.toFixed(2),
       });
     }
   }
@@ -171,7 +170,7 @@ function startSoundLoop() {
   clearInterval(soundInterval); // Clear any existing interval
 
   soundInterval = setInterval(() => {
-    if (currentBox < hsbValuesGrid.length) {
+    if (currentBox < rgbValuesGrid.length) {
       playSoundForBox(currentBox); // Play sound for the current box
       currentBox++; // Move to the next box
     } else {
@@ -182,119 +181,101 @@ function startSoundLoop() {
 
 // Function to play sound for a specific box
 function playSoundForBox(index) {
-  let hsb = hsbValuesGrid[index];
+  let rgb = rgbValuesGrid[index];
 
-  // Random mapping between HSB and sound parameters for melody synth
+  // Random mapping between RGB and sound parameters for melody synth
   let randomFactor = random(0.8, 1.2); // Small random factor
 
   let noteIndex, volume, duration;
 
-  // Switch for different mappings of HSB values to sound parameters
+  // Switch for different mappings of RGB values to sound parameters
   let randomMapping = int(random(3));
   switch (randomMapping) {
     case 0:
-      // Hue affects note, Saturation affects volume, Brightness affects duration
-      noteIndex = floor(map(hsb.h, 0, 360, 0, notes.length)) % notes.length;
-      volume = map(hsb.s * randomFactor, 0, 100, -12, 0);
-      duration = map(hsb.b * randomFactor, 0, 100, 0.1, 1);
+      // Red affects note, Green affects volume, Blue affects duration
+      noteIndex = floor(map(rgb.r, 0, 255, 0, notes.length)) % notes.length;
+      volume = map(rgb.g * randomFactor, 0, 255, -12, 0);
+      duration = map(rgb.b * randomFactor, 0, 255, 0.1, 1);
       break;
     case 1:
-      // Saturation affects note, Brightness affects volume, Hue affects duration
-      noteIndex = floor(map(hsb.s, 0, 100, 0, notes.length)) % notes.length;
-      volume = map(hsb.b * randomFactor, 0, 100, -12, 0);
-      duration = map(hsb.h * randomFactor, 0, 360, 0.1, 1);
+      // Green affects note, Blue affects volume, Red affects duration
+      noteIndex = floor(map(rgb.g, 0, 255, 0, notes.length)) % notes.length;
+      volume = map(rgb.b * randomFactor, 0, 255, -12, 0);
+      duration = map(rgb.r * randomFactor, 0, 255, 0.1, 1);
       break;
     case 2:
-      // Brightness affects note, Hue affects volume, Saturation affects duration
-      noteIndex = floor(map(hsb.b, 0, 100, 0, notes.length)) % notes.length;
-      volume = map(hsb.h * randomFactor, 0, 360, -12, 0);
-      duration = map(hsb.s * randomFactor, 0, 100, 0.1, 1);
+      // Blue affects note, Red affects volume, Green affects duration
+      noteIndex = floor(map(rgb.b, 0, 255, 0, notes.length)) % notes.length;
+      volume = map(rgb.r * randomFactor, 0, 255, -12, 0);
+      duration = map(rgb.g * randomFactor, 0, 255, 0.1, 1);
       break;
   }
 
-  let note = notes[noteIndex];
+  // Play the note with mapped parameters
+  synth.triggerAttackRelease(notes[noteIndex], duration, undefined, volume);
 
-  // Play melody synth sound with smoother sound
-  synth.triggerAttackRelease(
-    note,
-    duration * 2, // Increase duration to make notes longer
-    Tone.now(),
-    Tone.dbToGain(volume)
-  );
-
-  // Random mapping for the bass
-  let bassNoteIndex =
-    floor(map(hsb.h, 0, 360, 0, bassNotes.length)) % bassNotes.length;
-  let bassDuration = map(hsb.s * randomFactor, 0, 100, 0.1, 1);
-
-  let bassNote = bassNotes[bassNoteIndex];
-
-  // Play bass sound
-  bassSynth.triggerAttackRelease(bassNote, bassDuration, Tone.now());
+  // Bass sound with lower notes, using RGB value from the same box
+  let bassNoteIndex = floor(map(rgb.r + rgb.g + rgb.b, 0, 765, 0, bassNotes.length)) % bassNotes.length;
+  let bassDuration = map(rgb.r * randomFactor, 0, 255, 0.1, 1);
+  bassSynth.triggerAttackRelease(bassNotes[bassNoteIndex], bassDuration);
 }
 
-// Function to display HSB values in each box of the grid
-function displayHSBValues() {
-  const boxWidth = snapshot.width / gridSize; // Width of each box
-  const boxHeight = snapshot.height / gridSize; // Height of each box
+// Function to display RGB values on the canvas
+function displayRGBValues() {
+  const boxWidth = video.width / gridSize; // Width of each box
+  const boxHeight = video.height / gridSize; // Height of each box
+
+  fill(255);
+  textSize(12);
+  textAlign(CENTER, CENTER);
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
-      let hsb = hsbValuesGrid[i * gridSize + j]; // Get the HSB values for the current box
+      let index = i * gridSize + j;
+      let rgb = rgbValuesGrid[index];
 
-      // Set the position for the textbox
-      let x = (width - video.width) / 2 + i * boxWidth;
-      let y = (height - video.height) / 2 + j * boxHeight;
+      let x = i * boxWidth + (width - video.width) / 2;
+      let y = j * boxHeight + (height - video.height) / 2;
 
-      // Draw a rectangle for background
-      fill(0, 0, 0, 0); // transparent box
-      rect(x, y, boxWidth, boxHeight);
-
-      // Set text color and display the HSB values
-      fill(0);
-      textSize(12);
-      text(`H: ${hsb.h}`, x + 5, y + 15);
-      text(`S: ${hsb.s}`, x + 5, y + 30);
-      text(`B: ${hsb.b}`, x + 5, y + 45);
+      // Display the RGB values in each box
+      text(`R:${rgb.r} G:${rgb.g} B:${rgb.b}`, x + boxWidth / 2, y + boxHeight / 2);
     }
   }
 }
-// Flow field set up with help from ChatGPT and also to draw it
 
-// Function to set up the flow field
+// Function to set up the flow field for organic movement
 function setupFlowField() {
-  cols = 50; // Number of columns in the flow field
-  rows = 50; // Number of rows in the flow field
-  flowField = []; // Reset flow field array
-
-  // Initialize the flow field with vectors based on Perlin noise
+  cols = gridSize;
+  rows = gridSize;
+  flowField = [];
   for (let i = 0; i < cols; i++) {
     flowField[i] = [];
     for (let j = 0; j < rows; j++) {
-      let angle = noise(i * noiseScale, j * noiseScale) * TWO_PI * 2; // Angle based on Perlin noise
-      flowField[i][j] = p5.Vector.fromAngle(angle); // Create a vector from the angle
+      let angle = noise(i * noiseScale, j * noiseScale) * TWO_PI;
+      flowField[i][j] = p5.Vector.fromAngle(angle);
     }
   }
 }
 
 // Function to draw the flow field with organic movement
 function drawFlowField() {
-  timeOffset += 0.01; // Increment time offset for animation
+  let fieldWidth = video.width / gridSize;
+  let fieldHeight = video.height / gridSize;
 
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
-      // Calculate noise value for the flow field
-      let angle =
-        noise(i * noiseScale, j * noiseScale, timeOffset) * TWO_PI * 2; // Update angle based on noise and time
-      flowField[i][j] = p5.Vector.fromAngle(angle); // Update flow field vector
+      let vector = flowField[i][j];
+      let x = i * fieldWidth + (width - video.width) / 2;
+      let y = j * fieldHeight + (height - video.height) / 2;
 
-      // Draw the flow field as lines
-      let x = map(i, 0, cols, 0, width);
-      let y = map(j, 0, rows, 0, height);
-      stroke(255, 100); // Set stroke color
-      strokeWeight(2); // Set stroke weight
-      let v = flowField[i][j]; // Get the vector from the flow field
-      line(x, y, x + v.x * 20, y + v.y * 20); // Draw the line based on the vector
+      stroke(255);
+      push();
+      translate(x + fieldWidth / 2, y + fieldHeight / 2);
+      rotate(vector.heading());
+      line(0, 0, fieldWidth * 0.5, 0);
+      pop();
     }
   }
+
+  timeOffset += 0.01;
 }
