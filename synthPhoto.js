@@ -265,6 +265,7 @@ function setupFlowField() {
   flowField = new Array(cols * rows);
 }
 
+// Used ChatGPT to change the color in the flowfield to RGB based on the picture
 function drawFlowField() {
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
