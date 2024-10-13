@@ -20,7 +20,7 @@ let synth, bassSynth; // Declare both synth and bass synth
 
 // Scale of notes for melody and bass
 const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
-const bassNotes = ["C2", "D2", "E2", "F2", "G2", "A2", "B2", "C3"];
+const bassNotes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"];
 
 let currentBox = 0; // Track the current box being played
 let soundInterval; // Interval for looping sound playback
@@ -53,13 +53,14 @@ function setup() {
       type: "sawtooth", // Sawtooth wave for that retro synthwave feel
     },
     envelope: {
-      attack: 0.1, // Slightly faster attack for punchy sound
+      attack: 2.0, // Slightly faster attack for punchy sound
       decay: 0.8,  // Longer decay for a sustained sound
       sustain: 0.6, // Sustain level for that "pad" like sound
       release: 1.2, // Longer release to let the notes fade out
     },
   }).toDestination();
 
+  //Using ChaatGPT to try and implement Reverb to the sound to make it less
   // Add reverb to create a synthwave atmospheric sound
   let reverb = new Tone.Reverb({
     decay: 3,        // Long reverb for atmosphere
