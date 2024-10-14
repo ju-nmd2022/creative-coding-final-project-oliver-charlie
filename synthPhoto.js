@@ -255,7 +255,6 @@ function setupFlowField() {
 
 // Used ChatGPT to change the color in the flowfield to RGB based on the picture
 function drawFlowField() {
-  strokeWeight(20);
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
       let x = i * 20;
@@ -268,7 +267,9 @@ function drawFlowField() {
       let rgb = rgbValuesGrid[gridIndex];
 
       // Calculate stroke opacity based on time
-      let strokeOpacity = 255; // Default full opacity
+      let strokeOpacity = null; // Default full opacity
+      let strokeWeightValue = null; // Default stroke weight
+
       /*Took help from ChatGPT to get the time function to work
       Tried to use millis() it but didn't work so got the suggestion
       to use hour() instead and that worked.
@@ -277,11 +278,14 @@ function drawFlowField() {
       // Compare current elapsed time to the target time
       if (currentHour >= 14) {
         strokeOpacity = 128; // Set opacity to half after 14:00
+        strokeWeightValue = 50; // Set stroke weight to 50 after 14:00
       } else {
         strokeOpacity = 255; // Full opacity before 14:00
+        strokeWeightValue = 5; // Set stroke weight to 5 before 14:00
       }
 
       // Set the stroke color using the RGB values
+      strokeWeight(strokeWeightValue);
       stroke(rgb.r, rgb.g, rgb.b, strokeOpacity); // Alpha value changing depending on time of the day
 
       let angle =
