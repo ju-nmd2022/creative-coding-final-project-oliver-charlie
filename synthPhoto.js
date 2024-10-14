@@ -19,7 +19,21 @@ const gridSize = 4; // Number of divisions in width and height
 let synth; // Declare synth synth
 
 // Scale of notes for melody
-const notes = ["C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5", "G3", "A3", "D5", "E5", "Bb4"];
+const notes = [
+  "C4",
+  "D4",
+  "E4",
+  "F4",
+  "G4",
+  "A4",
+  "B4",
+  "C5",
+  "G3",
+  "A3",
+  "D5",
+  "E5",
+  "Bb4",
+];
 //const notes = ["C4"];
 
 let currentBox = 0; // Track the current box being played
@@ -54,7 +68,7 @@ function setup() {
     },
     envelope: {
       attack: 1.0, // Slightly faster attack for punchy sound
-      decay: 0.8,  // Longer decay for a sustained sound
+      decay: 0.8, // Longer decay for a sustained sound
       sustain: 1.5, // Sustain level for that "pad" like sound
       release: 10.2, // Longer release to let the notes fade out
     },
@@ -63,8 +77,8 @@ function setup() {
   //Using ChaatGPT to try and implement Reverb to the sound to make it less
   // Add reverb to create a synthwave atmospheric sound
   let reverb = new Tone.Reverb({
-    decay: 3,        // Long reverb for atmosphere
-    wet: 0.4         // 40% wet signal to mix in spacey feel
+    decay: 3, // Long reverb for atmosphere
+    wet: 0.4, // 40% wet signal to mix in spacey feel
   }).toDestination();
 
   // Add chorus effect to enhance the retro sound
@@ -93,8 +107,6 @@ function draw() {
       fadeAmount += 5; // Increase fade amount over time
       tint(255, 255 - fadeAmount); // Apply tint to fade out the image
       image(snapshot, x, y, 640, 480); // Draw the frozen image if it exists
-      displayRGBValues(); // Display RGB values on the canvas
-
       // If the fade amount exceeds 255, reset snapshot
       if (fadeAmount > 255) {
         snapshot = null;
@@ -227,35 +239,11 @@ function playSoundForBox(index) {
   // Trigger the main synth sound with a synthwave feel
   synth.triggerAttackRelease(
     note,
-    duration,          // Long note duration for synthwave
+    duration, // Long note duration for synthwave
     undefined,
-    Tone.dbToGain(volume)  // Converted volume to decibels
+    Tone.dbToGain(volume) // Converted volume to decibels
   );
 }
-
-function displayRGBValues() {
-  const boxWidth = width / gridSize;
-  const boxHeight = height / gridSize;
-
-  textAlign(CENTER, CENTER);
-  textSize(16);
-  fill(255);
-
-  for (let i = 0; i < gridSize; i++) {
-    for (let j = 0; j < gridSize; j++) {
-      let index = i * gridSize + j;
-      let rgb = rgbValuesGrid[index];
-      let x = i * boxWidth;
-      let y = j * boxHeight;
-
-      // Display R, G, and B values for each grid box
-      text(`R: ${rgb.r}`, x + boxWidth / 2, y + 15); // Display the red value
-      text(`G: ${rgb.g}`, x + boxWidth / 2, y + 35); // Display the green value
-      text(`B: ${rgb.b}`, x + boxWidth / 2, y + 55); // Display the blue value
-    }
-  }
-}
-
 
 // Flow field setup and drawing, same as before
 function setupFlowField() {
@@ -277,11 +265,12 @@ function drawFlowField() {
 
       // Get the RGB values for the current grid cell
       let rgb = rgbValuesGrid[gridIndex];
-      
+
       // Set the stroke color using the RGB values
       stroke(rgb.r, rgb.g, rgb.b, 255); // Set alpha for a more subtle effect
 
-      let angle = noise(i * noiseScale, j * noiseScale, timeOffset) * TWO_PI * 2;
+      let angle =
+        noise(i * noiseScale, j * noiseScale, timeOffset) * TWO_PI * 2;
       let v = p5.Vector.fromAngle(angle);
       flowField[i + j * cols] = v;
 
@@ -295,4 +284,3 @@ function drawFlowField() {
 
   timeOffset += 0.01;
 }
-
