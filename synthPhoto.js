@@ -255,6 +255,7 @@ function setupFlowField() {
 
 // Used ChatGPT to change the color in the flowfield to RGB based on the picture
 function drawFlowField() {
+  strokeWeight(20);
   for (let i = 0; i < cols; i++) {
     for (let j = 0; j < rows; j++) {
       let x = i * 20;
@@ -266,21 +267,45 @@ function drawFlowField() {
       // Get the RGB values for the current grid cell
       let rgb = rgbValuesGrid[gridIndex];
 
+      // Calculate stroke opacity based on time
+      let strokeOpacity = 255; // Default full opacity
+      /*Took help from ChatGPT to get the time function to work
+      Tried to use millis() it but didn't work so got the suggestion
+      to use hour() instead and that worked.
+      */
+      const currentHour = hour(); // saving the current time
+      // Compare current elapsed time to the target time
+      if (currentHour >= 14) {
+        strokeOpacity = 128; // Set opacity to half after 14:00
+      } else {
+        strokeOpacity = 255; // Full opacity before 14:00
+      }
+
       // Set the stroke color using the RGB values
-      stroke(rgb.r, rgb.g, rgb.b, 255); // Set alpha for a more subtle effect
+      stroke(rgb.r, rgb.g, rgb.b, strokeOpacity); // Alpha value changing depending on time of the day
 
       let angle =
         noise(i * noiseScale, j * noiseScale, timeOffset) * TWO_PI * 2;
       let v = p5.Vector.fromAngle(angle);
       flowField[i + j * cols] = v;
 
+      //Took help from ChatGPT to get the visuals more organic
+      let nextX = (i + 1) * 20;
+      let nextY = (j + 1) * 20;
+
       push();
       translate(x, y);
-      rotate(v.heading());
-      line(0, 0, 10, 0); // Draw the flow line
+      let nextAngle =
+        noise((i + 1) * noiseScale, (j + 1) * noiseScale, timeOffset) *
+        TWO_PI *
+        2;
+      let nextV = p5.Vector.fromAngle(nextAngle);
+
+      // Connect the current point to the next point in the flow field
+      line(v.x * 10, v.y * 10, nextV.x * 12, nextV.y * 12);
       pop();
     }
   }
 
-  timeOffset += 0.01;
+  timeOffset += 0.002; // Move the noise field over time for animation
 }
